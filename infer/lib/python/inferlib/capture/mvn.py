@@ -39,8 +39,9 @@ class MavenCapture:
 
     def get_infer_commands(self, verbose_output):
         calls = []
-        calls += self._get_java_infer_commands(verbose_output)
         calls += self._get_scala_infer_commands(verbose_output)
+        if len(calls) == 0:
+            calls += self._get_java_infer_commands(verbose_output)
         return calls
 
     def _get_java_infer_commands(self, verbose_output):
@@ -67,7 +68,9 @@ class MavenCapture:
                 for src_root in src_roots:
                     for root, dirs, files in os.walk(src_root):
                         for name in files:
-                            files_to_compile.append(os.path.join(root, name))
+                            found = re.match(r'\.java$',name)
+                            if found:
+                                files_to_compile.append(os.path.join(root, name))
                 source_roots_next = False
 
             elif options_pattern in line:
@@ -86,6 +89,9 @@ class MavenCapture:
         return calls
 
     def _get_scala_infer_commands(self, verbose_output):
+        compiler_pattern   = r'[DEBUG]    scala compiler = ([^ ]*)'
+        library_pattern    = r'[DEBUG]    scala library = ([^ ]*)'
+        extra_pattern      = '[DEBUG]    scala extra = {'
         classpath_pattern  = '[DEBUG]    classpath = {'
         sources_pattern    = '[DEBUG]    sources = {'
         output_dir_pattern = r'\[DEBUG\]    output directory = ([^ ]*)'
@@ -108,6 +114,8 @@ class MavenCapture:
             elif options_pattern in line:
                 section = "options"
                 continue
+            elif extra_pattern in line:
+                section = "classpath"
             elif end_pattern in line:
                 if section == "options":
                     scalac_args = []
@@ -127,9 +135,17 @@ class MavenCapture:
                 section = "none"
                 continue
             else:
-                found = re.match(output_dir_pattern, line):
+                found = re.match(output_dir_pattern, line)
                 if found:
                     output_dir = found.group(1)
+                    continue
+                found = re.match(compiler_pattern, line)
+                if found:
+                    classpath.append(found.group(1))
+                    continue
+                found = re.match(library_pattern, line)
+                if found:
+                    classpath.append(found.group(1))
                     continue
 
             if section == "classpath":
