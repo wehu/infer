@@ -34,6 +34,7 @@ MODULE_TO_COMMAND = {
     'buck': ['buck'],
     'gradle': ['gradle', 'gradlew'],
     'javac': ['javac'],
+    'scalac': ['scalac'],
     'make': make.SUPPORTED_COMMANDS,
     'xcodebuild': ['xcodebuild'],
     'mvn': ['mvn'],

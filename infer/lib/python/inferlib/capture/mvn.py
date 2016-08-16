@@ -11,6 +11,7 @@ import re
 import util
 
 from inferlib import jwlib
+from inferlib import scalalib
 
 MODULE_NAME = __name__
 MODULE_DESCRIPTION = '''Run analysis of code built with a command like:
@@ -37,6 +38,12 @@ class MavenCapture:
         self.build_cmd = ['mvn', '-X'] + cmd[1:]
 
     def get_infer_commands(self, verbose_output):
+        calls = []
+        calls += self._get_java_infer_commands(verbose_output)
+        calls += self._get_scala_infer_commands(verbose_output)
+        return calls
+
+    def _get_java_infer_commands(self, verbose_output):
         file_pattern = r'\[DEBUG\] Stale source detected: ([^ ]*\.java)'
         options_pattern = '[DEBUG] Command line options:'
         source_roots_pattern = '[DEBUG] Source roots:'
@@ -76,6 +83,61 @@ class MavenCapture:
                 if found:
                     files_to_compile.append(found.group(1))
 
+        return calls
+
+    def _get_scala_infer_commands(self, verbose_output):
+        classpath_pattern  = '[DEBUG]    classpath = {'
+        sources_pattern    = '[DEBUG]    sources = {'
+        output_dir_pattern = r'\[DEBUG\]    output directory = ([^ ]*)'
+        options_pattern    = '[DEBUG]    scalac options = {'
+        end_pattern        = '[DEBUG]    }'
+        calls = []
+
+        section    = "none"
+        output_dir = "."
+        classpath  = []
+        sources    = []
+        options    = []
+        for line in verbose_output:
+            if classpath_pattern in line:
+                section = "classpath"
+                continue
+            elif sources_pattern in line:
+                section = "sources"
+                continue
+            elif options_pattern in line:
+                section = "options"
+                continue
+            elif end_pattern in line:
+                if section == "options":
+                    scalac_args = []
+                    if len(classpath) > 0:
+                        scalac_args.append("-classpath")
+                        scalac_args.append(':'.join(classpath))
+                    scalac_args += sources
+                    scalac_args += options
+                    scalac_args.append("-d")
+                    scalac_args.append(output_dir)
+                    capture = scalalib.create_infer_command(self.args, scalac_args)
+                    calls.append(capture)
+                    classpath  = []
+                    sources    = []
+                    output_dir = "."
+                    options    = []
+                section = "none"
+                continue
+            else:
+                found = re.match(output_dir_pattern, line):
+                if found:
+                    output_dir = found.group(1)
+                    continue
+
+            if section == "classpath":
+               classpath.append(re.split('\\s+', line)[1])
+            elif section == "sources":
+               sources.append(re.split('\\s+', line)[1])
+            elif section == "options":
+               options.append(re.split('\\s+', line)[1])
         return calls
 
     def capture(self):

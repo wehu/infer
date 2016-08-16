@@ -172,7 +172,7 @@ let save_time_in_summaries = false
 (** If true enables printing proposition compatible for the SMT project *)
 let smt_output = false
 
-let source_file_extentions = [".java"; ".m"; ".mm"; ".c"; ".cc"; ".cpp"; ".h"]
+let source_file_extentions = [".java"; ".scala"; ".m"; ".mm"; ".c"; ".cc"; ".cpp"; ".h"]
 
 let sources_dir_name = "sources"
 
