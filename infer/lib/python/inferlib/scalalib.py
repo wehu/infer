@@ -240,6 +240,11 @@ class AnalyzerWithFrontendWrapper(analyze.AnalyzerWrapper):
 
     def __init__(self, args, scalac_cmd, scalac_args):
         self.scalac = CompilerCall(scalac_cmd, scalac_args)
+        self.scala_source_files = []
+        for a in scalac_args:
+            found = re.match(r'.*\.(java|scala)$', a)
+            if found:
+                self.scala_source_files.append(a)
         if not self.scalac.args.version:
             if scalac_args is None:
                 help_exit('No scalac command detected')
@@ -289,19 +294,24 @@ class AnalyzerWithFrontendWrapper(analyze.AnalyzerWrapper):
             try:
                 o = open(tmp, 'w')
                 classpath_pattern = r'\[search path for class files: ([^ ]+)\]'
-                parsing_pattern   = r'\[parsing ([^ ]+)\]'
+                #parsing_pattern   = r'\[parsing ([^ ]+)\]'
                 classfile_pattern = r'\[wrote [^ ]+ to ([^ ]+)\]'
+                for a in self.scala_source_files:
+                    print("[parsing started RegularFileObject[{0}]]".format(a), file=o)
                 for line in f:
-                    if re.match(classpath_pattern, line):
-                        found = re.match(classpath_pattern, line)
+                    line = line.strip()
+                    found = re.match(classpath_pattern, line)
+                    if found:
                         #print("[search path for class files: {0}]".format(','.join(found.group(1).split(':'))))
                         print("[search path for class files: {0}]".format(','.join(found.group(1).split(':'))), file=o)
-                    elif re.match(parsing_pattern, line):
-                        found = re.match(parsing_pattern, line)
+                        continue
+                    #found = re.match(parsing_pattern, line)
+                    #if found:
                         #print("[parsing started RegularFileObject[{0}]]".format(found.group(1)))
-                        print("[parsing started RegularFileObject[{0}]]".format(found.group(1)), file=o)
-                    elif re.match(classfile_pattern, line):
-                        found = re.match(classfile_pattern, line)
+                    #    print("[parsing started RegularFileObject[{0}]]".format(found.group(1)), file=o)
+                    #    continue
+                    found = re.match(classfile_pattern, line)
+                    if found:
                         #print("[wrote RegularFileObject[{0}]]".format(found.group(1)))
                         print("[wrote RegularFileObject[{0}]]".format(found.group(1)), file=o)
                     else:
