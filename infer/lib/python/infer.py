@@ -189,7 +189,7 @@ def main():
         global_argparser.print_help()
         sys.exit(os.EX_OK)
 
-    if not (mod_name == 'buck' or mod_name == 'javac'):
+    if not (mod_name == 'buck' or mod_name == 'javac' or mod_name == 'scalac'):
         # Something should be already captured, otherwise analysis would fail
         if not os.path.exists(os.path.join(args.infer_out, 'captured')):
             print('There was nothing to analyze, exiting')
