@@ -20,6 +20,8 @@ import re
 import shutil
 import subprocess
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from inferlib import colorize, config, issues, source, utils
 
