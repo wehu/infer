@@ -40,7 +40,8 @@ class MavenCapture:
     def get_infer_commands(self, verbose_output):
         calls = []
         calls += self._get_scala_infer_commands(verbose_output)
-        calls += self._get_java_infer_commands(verbose_output)
+        if len(calls) == 0:
+            calls += self._get_java_infer_commands(verbose_output)
         return calls
 
     def _get_java_infer_commands(self, verbose_output):
