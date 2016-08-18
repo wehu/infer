@@ -89,14 +89,15 @@ class MavenCapture:
         return calls
 
     def _get_scala_infer_commands(self, verbose_output):
-        compiler_pattern   = r'[DEBUG]    scala compiler = ([^ ]*)'
-        library_pattern    = r'[DEBUG]    scala library = ([^ ]*)'
+        compiler_pattern   = r'\[DEBUG\]    scala compiler = ([^ ]*)'
+        library_pattern    = r'\[DEBUG\]    scala library = ([^ ]*)'
         extra_pattern      = '[DEBUG]    scala extra = {'
         classpath_pattern  = '[DEBUG]    classpath = {'
         sources_pattern    = '[DEBUG]    sources = {'
         output_dir_pattern = r'\[DEBUG\]    output directory = ([^ ]*)'
         options_pattern    = '[DEBUG]    scalac options = {'
         end_pattern        = '[DEBUG]    }'
+        final_pattern      = '[DEBUG] }'
         calls = []
 
         section    = "none"
@@ -107,17 +108,29 @@ class MavenCapture:
         for line in verbose_output:
             if classpath_pattern in line:
                 section = "classpath"
+                if classpath_pattern+'}' == line:
+                    section = "none"
                 continue
             elif sources_pattern in line:
                 section = "sources"
+                if sources_pattern+'}' == line:
+                    section = "none"
                 continue
             elif options_pattern in line:
                 section = "options"
+                if options_pattern+'}' == line:
+                    section = "none"
                 continue
             elif extra_pattern in line:
                 section = "classpath"
+                if extra_pattern+'}' == line:
+                    section = "none"
+                continue
             elif end_pattern in line:
-                if section == "options":
+                section = "none"
+                continue
+            elif final_pattern in line:
+                if len(sources) > 0 :
                     scalac_args = []
                     if len(classpath) > 0:
                         scalac_args.append("-classpath")
@@ -126,6 +139,7 @@ class MavenCapture:
                     scalac_args += options
                     scalac_args.append("-d")
                     scalac_args.append(output_dir)
+                    print(scalac_args)
                     capture = scalalib.create_infer_command(self.args, scalac_args)
                     calls.append(capture)
                     classpath  = []
