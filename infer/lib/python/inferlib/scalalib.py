@@ -54,7 +54,7 @@ def _get_scalac_args(args):
     else:
         # replace any -g:.* flag with -g to preserve debugging symbols
         args = map(lambda arg: '-g:notailcalls' if '-g' in arg else arg, scalac_args)
-        args = map(lambda arg: '-classpath' if '-cp' == arg else arg, scalac_args)
+        args = map(lambda arg: '-classpath' if '-cp' == arg else arg, args)
         # skip -Werror
         args = filter(lambda arg: arg != '-Werror', args)
         # skip javac
