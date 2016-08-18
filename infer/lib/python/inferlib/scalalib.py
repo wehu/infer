@@ -56,6 +56,8 @@ def _get_scalac_args(args):
         args = map(lambda arg: '-g:notailcalls' if '-g' in arg else arg, scalac_args)
         # skip -Werror
         args = filter(lambda arg: arg != '-Werror', args)
+        # skip javac
+        args = filter(lambda arg: arg != 'javac', args)
         return args
 
 
