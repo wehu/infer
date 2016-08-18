@@ -53,7 +53,7 @@ def _get_scalac_args(args):
         return None
     else:
         # replace any -g:.* flag with -g to preserve debugging symbols
-        args = map(lambda arg: '-g:notailcalls' if '-g:' in arg else arg, scalac_args)
+        args = map(lambda arg: '-g:notailcalls' if '-g' in arg else arg, scalac_args)
         # skip -Werror
         args = filter(lambda arg: arg != '-Werror', args)
         return args
