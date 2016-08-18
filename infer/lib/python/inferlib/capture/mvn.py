@@ -139,7 +139,6 @@ class MavenCapture:
                     scalac_args += options
                     scalac_args.append("-d")
                     scalac_args.append(output_dir)
-                    print(scalac_args)
                     capture = scalalib.create_infer_command(self.args, scalac_args)
                     calls.append(capture)
                     classpath  = []
