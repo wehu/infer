@@ -23,8 +23,10 @@ end
 module type S = sig
   include Spec
   type t
+  type astate = t
+  include AbstractDomain.S with type astate := astate
 
-  (** get the sources of the trace. this should never be empty *)
+  (** get the sources of the trace. *)
   val sources : t -> Source.Set.t
 
   (** get the sinks of the trace *)
@@ -41,6 +43,9 @@ module type S = sig
 
   (** add a sink to the current trace. *)
   val add_sink : Sink.t -> t -> t
+
+  (** return true if this trace has no source or sink data *)
+  val is_empty : t -> bool
 
   val compare : t -> t -> int
 
@@ -61,6 +66,8 @@ module Make (Spec : Spec) = struct
       passthroughs : Passthrough.Set.t; (** calls that occurred between source and sink *)
     }
 
+  type astate = t
+
   let compare t1 t2 =
     Sources.compare t1.sources t2.sources
     |> next Sinks.compare t1.sinks t2.sinks
@@ -77,6 +84,10 @@ module Make (Spec : Spec) = struct
 
   let sinks t =
     t.sinks
+
+  let is_empty t =
+    (* sources empty => sinks empty and passthroughs empty *)
+    Sources.is_empty t.sources
 
   let get_reports t =
     if Sinks.is_empty t.sinks
@@ -101,4 +112,28 @@ module Make (Spec : Spec) = struct
   let add_sink sink t =
     let sinks = Sinks.add sink t.sinks in
     { t with sinks; }
+
+  let initial =
+    let sources = Sources.empty in
+    let sinks = Sinks.empty in
+    let passthroughs = Passthrough.Set.empty in
+    { sources; sinks; passthroughs; }
+
+  let (<=) ~lhs ~rhs =
+    lhs == rhs ||
+    (Sources.subset lhs.sources rhs.sources &&
+     Sinks.subset lhs.sinks rhs.sinks &&
+     Passthrough.Set.subset lhs.passthroughs rhs.passthroughs)
+
+  let join t1 t2 =
+    if t1 == t2
+    then t1
+    else
+      let sources = Sources.union t1.sources t2.sources in
+      let sinks = Sinks.union t1.sinks t2.sinks in
+      let passthroughs = Passthrough.Set.union t1.passthroughs t2.passthroughs in
+      { sources; sinks; passthroughs; }
+
+  let widen ~prev ~next ~num_iters:_ =
+    join prev next
 end

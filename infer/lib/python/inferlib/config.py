@@ -14,8 +14,11 @@ import locale
 import os
 
 
-locale.setlocale(locale.LC_ALL, '')
-CODESET = locale.getlocale(locale.LC_CTYPE)[1]
+try:
+    locale.setlocale(locale.LC_ALL, '')
+    CODESET = locale.getlocale(locale.LC_CTYPE)[1]
+except locale.Error:
+    CODESET = None
 if CODESET is None:
     CODESET = 'ascii'
 
@@ -70,6 +73,7 @@ ANALYZER_CAPTURE = 'capture'
 ANALYZER_COMPILE = 'compile'
 ANALYZER_TRACING = 'tracing'
 ANALYZER_CRASHCONTEXT = 'crashcontext'
+ANALYZER_LINTERS = 'linters'
 
 ANALYZERS = [
     ANALYZER_CAPTURE,
@@ -78,5 +82,6 @@ ANALYZERS = [
     ANALYZER_CRASHCONTEXT,
     ANALYZER_ERADICATE,
     ANALYZER_INFER,
+    ANALYZER_LINTERS,
     ANALYZER_TRACING,
 ]
